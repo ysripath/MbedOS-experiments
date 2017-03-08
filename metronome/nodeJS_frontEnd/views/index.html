@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+  </head>
+
+  <body>
+
+    <div class="container" style="padding-top: 50px;">
+      <div class="jumbotron text-center">
+
+        <h1>BPM: <span id="bpm_text">0</span></h1>
+
+        <div class="row" style="padding: 10px;">
+          <button id="get_bpm" type="button" class="btn btn-primary">GET</button>
+        </div>
+
+        <div class="row" style="padding: 10px;">
+          <div class="input-group" style="width: 200px; margin: auto;">
+            <input id="putValue" type="text" class="form-control">
+            <div class="input-group-btn">
+              <button id="put_bpm" type="button" class="btn btn-default">PUT</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="well text-left" style="margin-top: 30px;">
+          <h4>Statistics</h4>
+          <div class="row center-block" style="padding: 10px; padding-bottom: 20px;">
+            <h5>Minimum BPM: <span id="MIN_BPM">0</span></h5>
+            <h5>Maximum BPM: <span id="MAX_BPM">0</span></h5>
+          </div>
+          <div class="row center-block">
+            <button id="reset_button" type="button" class="btn btn-danger">RESET</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="js/socket.io.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        // Create a new WebSocket
+        var socket = io();
+
+        // When the html element with the ID get_bpm is clicked, send a message
+        $('#get_bpm').on('click', function() {
+          // get-bpm does not need to send any parameters
+          socket.emit('get-bpm', {});
+        });
+		
+		// Reset Min and Max BPM on Reset button click
+		$('#reset_button').on('click', function() {
+			socket.emit('reset', {});
+		});
+		
+		
+		// When the html element with the ID put_bpm is clicked, send a message along with the valid bpm count
+		$('#put_bpm').on('click', function() {
+          // get-bpm does not need to send any parameters
+		  var word = document.getElementById("putValue").value;
+		//console.log("WORD = "+word);
+		if (word === "")
+			word = 0;
+			
+		if (word > 250)
+		{
+			alert("MAX value of BPM is 250");
+		}
+		else if (word < 0)
+		{
+			alert("BPM value cannot be negative");
+		}
+		else if (word >=0 && word <=250)
+		{
+			var str = JSON.stringify(word);
+		  //console.log("PUT operation called with "+word);
+          socket.emit('put-bpm', word);
+		}
+		else
+		{
+			alert("Invalid input. Input only positive integers");
+		}
+        });
+		var playMode = false;
+		var blinker;
+		
+        socket.on('minBpm', function(data) {
+		//console.log("MIN BPM REset");
+		if (data.value == 0)
+			$('#MIN_BPM').html("UNDEFINED");
+		else
+			$('#MIN_BPM').html(data.value);
+		});
+		
+		socket.on('maxBpm', function(data) {
+		//console.log("MAX BPM Reset");
+		if (data.value == 0)
+			$('#MAX_BPM').html("UNDEFINED");
+		else
+			$('#MAX_BPM').html(data.value);
+		});
+		
+		
+		
+		// When the bpm response is received from the server, render the result
+		
+		
+		
+		
+        socket.on('bpm', function(data) {
+          //console.log('bpm', data);
+          // Set the html tag value for the coresponding ID to the data
+          $('#bpm_text').html(data.value);
+		  clearInterval(blinker);
+		  playMode = true;
+		  // call interval method
+		  var blink = function() {
+					
+						var audio = new Audio('click.wav');
+						audio.play();
+						document.body.style.backgroundColor = "#660000";
+						function myFunction() {
+							document.body.style.backgroundColor = "white";							
+						}
+						setTimeout(myFunction, 200);
+					
+						
+				
+		  }
+		  if (data.value != 0)		  
+			blinker = setInterval(blink,(60/data.value)*1000);
+        });
+      });
+    </script>
+
+  </body>
+
+</html>
+
+  </body>
+</html>
